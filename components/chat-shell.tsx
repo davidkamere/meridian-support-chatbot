@@ -5,7 +5,9 @@ import { ChatMessage } from "@/components/chat-message";
 import { Composer } from "@/components/composer";
 import { EmptyState } from "@/components/empty-state";
 import { INITIAL_MESSAGES } from "@/lib/constants";
-import type { ChatApiResponse, Message } from "@/lib/types";
+import type { ChatApiResponse, ChatTurn, Message } from "@/lib/types";
+
+const HISTORY_LIMIT = 8;
 
 export function ChatShell() {
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
@@ -34,7 +36,10 @@ export function ChatShell() {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: trimmed }),
+        body: JSON.stringify({
+          message: trimmed,
+          history: buildHistory(messages),
+        }),
       });
 
       const payload = (await response.json()) as ChatApiResponse;
@@ -99,4 +104,14 @@ export function ChatShell() {
       </div>
     </main>
   );
+}
+
+function buildHistory(messages: Message[]): ChatTurn[] {
+  return messages
+    .filter((message) => message.role === "user" || message.role === "assistant")
+    .slice(-HISTORY_LIMIT)
+    .map((message) => ({
+      role: message.role,
+      content: message.content,
+    }));
 }

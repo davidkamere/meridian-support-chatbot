@@ -2,6 +2,7 @@ import { callTool } from "@/lib/mcp-client";
 import { parseProductDetail, parseProductList } from "@/lib/parser";
 import type {
   ChatApiResponse,
+  ChatTurn,
   OpenRouterMessage,
   OpenRouterResponse,
   OpenRouterToolCall,
@@ -10,17 +11,13 @@ import type {
 
 const OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions";
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini";
-const PUBLIC_TOOL_NAMES = ["list_products", "search_products", "get_product"] as const;
 const MAX_TOOL_ROUNDS = 4;
+const HISTORY_LIMIT = 8;
 
 const SYSTEM_PROMPT = `
 You are Meridian Electronics' public catalog assistant.
 
 You help customers browse products, search the catalog, and check stock availability.
-You may only use these catalog tools:
-- list_products
-- search_products
-- get_product
 
 Rules:
 - Never mention internal systems, MCP, or tool names unless the user asks.
@@ -30,7 +27,7 @@ Rules:
 - After using tools, answer clearly and concisely in a customer-friendly tone.
 `.trim();
 
-const TOOLS = [
+const PUBLIC_TOOLS = [
   {
     type: "function",
     function: {
@@ -95,7 +92,10 @@ type ToolExecutionResult = {
   products: Product[];
 };
 
-export async function runCatalogAgent(message: string): Promise<ChatApiResponse> {
+export async function runCatalogAgent(
+  message: string,
+  history: ChatTurn[] = [],
+): Promise<ChatApiResponse> {
   const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
     throw new Error("Missing OPENROUTER_API_KEY environment variable.");
@@ -103,6 +103,7 @@ export async function runCatalogAgent(message: string): Promise<ChatApiResponse>
 
   const messages: OpenRouterMessage[] = [
     { role: "system", content: SYSTEM_PROMPT },
+    ...normalizeHistory(history),
     { role: "user", content: message },
   ];
 
@@ -163,7 +164,10 @@ export async function runCatalogAgent(message: string): Promise<ChatApiResponse>
   };
 }
 
-async function requestOpenRouter(messages: OpenRouterMessage[], apiKey: string) {
+async function requestOpenRouter(
+  messages: OpenRouterMessage[],
+  apiKey: string,
+) {
   const response = await fetch(OPENROUTER_URL, {
     method: "POST",
     headers: {
@@ -175,7 +179,7 @@ async function requestOpenRouter(messages: OpenRouterMessage[], apiKey: string) 
     body: JSON.stringify({
       model: OPENROUTER_MODEL,
       messages,
-      tools: TOOLS,
+      tools: PUBLIC_TOOLS,
       tool_choice: "auto",
       parallel_tool_calls: false,
       temperature: 0.2,
@@ -198,10 +202,6 @@ async function requestOpenRouter(messages: OpenRouterMessage[], apiKey: string) 
 
 async function executePublicToolCall(toolCall: OpenRouterToolCall): Promise<ToolExecutionResult> {
   const toolName = toolCall.function.name;
-  if (!PUBLIC_TOOL_NAMES.includes(toolName as (typeof PUBLIC_TOOL_NAMES)[number])) {
-    throw new Error(`Tool ${toolName} is not allowed in the public catalog flow.`);
-  }
-
   const parsedArguments = parseToolArguments(toolCall.function.arguments);
 
   if (toolName === "list_products") {
@@ -228,6 +228,8 @@ async function executePublicToolCall(toolCall: OpenRouterToolCall): Promise<Tool
     };
   }
 
+  assertPublicCatalogTool(toolName);
+
   const rawText = await callTool("get_product", {
     sku: String(parsedArguments.sku ?? ""),
   });
@@ -246,4 +248,26 @@ function parseToolArguments(argumentsText: string): Record<string, unknown> {
   } catch {
     throw new Error(`Invalid tool arguments: ${argumentsText}`);
   }
+}
+
+function assertPublicCatalogTool(toolName: string) {
+  const publicToolNames = [
+    "list_products",
+    "search_products",
+    "get_product",
+  ] as const;
+
+  if (!publicToolNames.includes(toolName as (typeof publicToolNames)[number])) {
+    throw new Error(`Tool ${toolName} is not allowed in this flow.`);
+  }
+}
+
+function normalizeHistory(history: ChatTurn[]): OpenRouterMessage[] {
+  return history
+    .filter((turn) => (turn.role === "user" || turn.role === "assistant") && turn.content.trim())
+    .slice(-HISTORY_LIMIT)
+    .map((turn) => ({
+      role: turn.role,
+      content: turn.content.trim(),
+    }));
 }

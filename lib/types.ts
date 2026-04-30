@@ -16,6 +16,7 @@ export type Message = {
 
 export type ChatRequestBody = {
   message: string;
+  history?: ChatTurn[];
 };
 
 export type ChatApiResponse = {
@@ -53,6 +54,11 @@ export type OpenRouterMessage = {
   tool_calls?: OpenRouterToolCall[];
   tool_call_id?: string;
   name?: string;
+};
+
+export type ChatTurn = {
+  role: "user" | "assistant";
+  content: string;
 };
 
 export type OpenRouterResponse = {
