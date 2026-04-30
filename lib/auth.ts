@@ -39,6 +39,7 @@ function parseVerifiedSession(rawText: string, fallbackEmail: string): VerifiedS
 
   const email = rawText.match(EMAIL_REGEX)?.[0] ?? fallbackEmail;
   const customerName =
+    rawText.match(/^✓?\s*Customer verified:\s+(.+)$/m)?.[1]?.trim() ??
     rawText.match(/^Name:\s+(.+)$/m)?.[1]?.trim() ??
     rawText.match(/^Customer:\s+(.+)$/m)?.[1]?.trim() ??
     null;
