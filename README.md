@@ -7,12 +7,17 @@ A Vercel-friendly Next.js prototype for Meridian Electronics' public catalog ass
 - Browse catalog by category
 - Search products by keyword
 - Check SKU details and availability
+- Verify returning customers with email and PIN
+- View verified customers' own order history
 
-This first version intentionally exposes only the public catalog tools from the Meridian MCP server:
+This version exposes public catalog tools and a verified order-history flow from the Meridian MCP server:
 
 - `list_products`
 - `search_products`
 - `get_product`
+- `verify_customer_pin`
+- `list_orders` through a verified-session wrapper
+- `get_order` through a verified-session wrapper
 
 The chat route uses OpenRouter tool calling so the model decides when to use each public tool.
 

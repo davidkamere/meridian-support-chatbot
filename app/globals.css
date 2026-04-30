@@ -87,6 +87,12 @@ a {
   font-size: 1.35rem;
 }
 
+.chat-subtitle {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 .message-scroll {
   flex: 1;
   overflow-y: auto;

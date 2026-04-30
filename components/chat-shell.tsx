@@ -5,7 +5,7 @@ import { ChatMessage } from "@/components/chat-message";
 import { Composer } from "@/components/composer";
 import { EmptyState } from "@/components/empty-state";
 import { INITIAL_MESSAGES } from "@/lib/constants";
-import type { ChatApiResponse, ChatTurn, Message } from "@/lib/types";
+import type { ChatApiResponse, ChatTurn, Message, VerifiedSession } from "@/lib/types";
 
 const HISTORY_LIMIT = 8;
 
@@ -13,6 +13,7 @@ export function ChatShell() {
   const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [verifiedSession, setVerifiedSession] = useState<VerifiedSession | null>(null);
 
   const hasConversation = useMemo(() => messages.length > INITIAL_MESSAGES.length, [messages]);
 
@@ -39,6 +40,7 @@ export function ChatShell() {
         body: JSON.stringify({
           message: trimmed,
           history: buildHistory(messages),
+          verifiedSession,
         }),
       });
 
@@ -49,6 +51,10 @@ export function ChatShell() {
         content: payload.message,
         products: payload.products,
       };
+
+      if (payload.verifiedSession) {
+        setVerifiedSession(payload.verifiedSession);
+      }
 
       setMessages((current) => [...current, assistantMessage]);
     } catch {
@@ -78,6 +84,9 @@ export function ChatShell() {
           <div className="chat-header">
             <div>
               <h1 className="chat-title">Meridian Catalog Assistant</h1>
+              {verifiedSession ? (
+                <p className="chat-subtitle">Verified for {verifiedSession.email}</p>
+              ) : null}
             </div>
           </div>
 

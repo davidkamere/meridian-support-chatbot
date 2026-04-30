@@ -7,6 +7,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as ChatRequestBody;
     const message = body.message?.trim();
     const history = Array.isArray(body.history) ? body.history : [];
+    const verifiedSession = body.verifiedSession ?? null;
 
     if (!message) {
       return NextResponse.json(
@@ -15,7 +16,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = await runCatalogAgent(message, history);
+    const response = await runCatalogAgent(message, history, verifiedSession);
     return NextResponse.json(response);
   } catch (error) {
     const message =

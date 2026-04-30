@@ -17,12 +17,14 @@ export type Message = {
 export type ChatRequestBody = {
   message: string;
   history?: ChatTurn[];
+  verifiedSession?: VerifiedSession | null;
 };
 
 export type ChatApiResponse = {
   message: string;
   products: Product[];
   intent: "agent" | "error";
+  verifiedSession?: VerifiedSession | null;
   debug?: string;
 };
 
@@ -59,6 +61,13 @@ export type OpenRouterMessage = {
 export type ChatTurn = {
   role: "user" | "assistant";
   content: string;
+};
+
+export type VerifiedSession = {
+  customerId: string;
+  email: string;
+  customerName: string | null;
+  verifiedAt: string;
 };
 
 export type OpenRouterResponse = {
