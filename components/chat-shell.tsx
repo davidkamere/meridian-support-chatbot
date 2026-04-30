@@ -84,9 +84,6 @@ export function ChatShell() {
           <div className="chat-header">
             <div>
               <h1 className="chat-title">Meridian Catalog Assistant</h1>
-              {verifiedSession ? (
-                <p className="chat-subtitle">Verified for {verifiedSession.email}</p>
-              ) : null}
             </div>
           </div>
 
