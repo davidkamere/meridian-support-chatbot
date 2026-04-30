@@ -8,6 +8,7 @@ export async function POST(request: Request) {
     const message = body.message?.trim();
     const history = Array.isArray(body.history) ? body.history : [];
     const verifiedSession = body.verifiedSession ?? null;
+    const cartState = body.cartState ?? null;
 
     if (!message) {
       return NextResponse.json(
@@ -16,7 +17,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = await runCatalogAgent(message, history, verifiedSession);
+    const response = await runCatalogAgent(message, history, verifiedSession, cartState);
     return NextResponse.json(response);
   } catch (error) {
     const message =

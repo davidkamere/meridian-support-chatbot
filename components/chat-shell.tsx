@@ -1,11 +1,13 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
+import { CartPanel } from "@/components/cart-panel";
+import { createEmptyCartState } from "@/lib/cart";
 import { ChatMessage } from "@/components/chat-message";
 import { Composer } from "@/components/composer";
 import { EmptyState } from "@/components/empty-state";
 import { INITIAL_MESSAGES } from "@/lib/constants";
-import type { ChatApiResponse, ChatTurn, Message, VerifiedSession } from "@/lib/types";
+import type { CartState, ChatApiResponse, ChatTurn, Message, VerifiedSession } from "@/lib/types";
 
 const HISTORY_LIMIT = 8;
 
@@ -14,6 +16,7 @@ export function ChatShell() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [verifiedSession, setVerifiedSession] = useState<VerifiedSession | null>(null);
+  const [cartState, setCartState] = useState<CartState>(createEmptyCartState());
 
   const hasConversation = useMemo(() => messages.length > INITIAL_MESSAGES.length, [messages]);
 
@@ -41,6 +44,7 @@ export function ChatShell() {
           message: trimmed,
           history: buildHistory(messages),
           verifiedSession,
+          cartState,
         }),
       });
 
@@ -54,6 +58,9 @@ export function ChatShell() {
 
       if (payload.verifiedSession) {
         setVerifiedSession(payload.verifiedSession);
+      }
+      if (payload.cartState) {
+        setCartState(payload.cartState);
       }
 
       setMessages((current) => [...current, assistantMessage]);
@@ -79,7 +86,7 @@ export function ChatShell() {
 
   return (
     <main className="page-shell">
-      <div className="app-frame app-frame-single">
+      <div className="app-frame app-frame-cart">
         <section className="chat-panel">
           <div className="chat-header">
             <div>
@@ -95,7 +102,7 @@ export function ChatShell() {
             {isLoading ? (
               <div className="message-bubble message-assistant">
                 <span className="message-role">assistant</span>
-                <p className="message-text">Looking through Meridian’s catalog...</p>
+                <p className="message-text">Thinking...</p>
               </div>
             ) : null}
           </div>
@@ -107,6 +114,8 @@ export function ChatShell() {
             isLoading={isLoading}
           />
         </section>
+
+        <CartPanel cartState={cartState} />
       </div>
     </main>
   );
