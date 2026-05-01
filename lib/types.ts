@@ -68,6 +68,15 @@ export type OpenRouterToolCall = {
   };
 };
 
+export type OpenRouterToolDefinition = {
+  type: "function";
+  function: {
+    name: string;
+    description: string;
+    parameters: Record<string, unknown>;
+  };
+};
+
 export type OpenRouterMessage = {
   role: "system" | "user" | "assistant" | "tool";
   content?: string | null;
@@ -100,4 +109,11 @@ export type OpenRouterResponse = {
 
 export type RequestRewriteResult = {
   rewrittenMessage: string;
+};
+
+export type ToolExecutionResult = {
+  rawText: string;
+  products: Product[];
+  verifiedSession?: VerifiedSession | null;
+  cartState?: CartState;
 };
